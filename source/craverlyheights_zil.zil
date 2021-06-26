@@ -1297,7 +1297,7 @@ and death in your hands." CR>)>)
 <ROUTINE V-SPOINT () <PERFORM V?POINT ,PRSI ,PRSO>>
 
 <ROUTINE V-POINT ("AUX" (XT ""))
-    <COND (<SID?> <SET XT "squarly ">)>
+    <COND (<SID?> <SET XT "squarely ">)>
     <COND (<0? ,PRSI> <TELL "You point " T ,PRSO " " .XT "at nothing in particular." CR>)
           (<AND <==? ,PRSO ,HANDGUN> <==? ,PRSI ,WINNER>>
            <COND (<BACKSTAGE?> <TELL "You point the gun at yourself. Kind of scary. Not really." CR>)
