@@ -1313,7 +1313,7 @@ and death in your hands." CR>)>)
                         (<==? <LOC ,GINA> ,HERE> <TELL "Gina gasps." CR>)
                         (<==? <LOC ,LEO> ,HERE> <TELL "Leopold squints at you." CR>)>
                   <SETG CURRENT-TARGET ,PRSI>
-				  <QUEUE I-CLEAR-TARGET 2>)>)
+                  <QUEUE I-CLEAR-TARGET 2>)>)
           (ELSE 
            <TELL "You point " T ,PRSO " " .XT "at " T ,PRSI CR>
            <SETG CURRENT-TARGET ,PRSI>
@@ -1920,6 +1920,7 @@ and,\" you say, \"if you see any other doll parts, make sure you let me know.\""
 
 <ROUTINE TRY-TAKE (OBJ "OPT" SILENT "AUX" HOLDER)
     <COND
+        (<AND ,PRSI <NOT <FSET? ,PRSI ,SURFACEBIT>>> <TELL "That can't contain things." CR> <RFALSE>) ;"Added message for 'take all from ..."
         (<=? .OBJ ,WINNER>
             <COND
                 (.SILENT)
@@ -1978,6 +1979,76 @@ and,\" you say, \"if you see any other doll parts, make sure you let me know.\""
             <RTRUE>)>>
 
 ;"*******************************************************
+  * Enable syntax from taking all/object from surface.  *
+  * There is also an added message in TRY-TAKE above to *
+  * support this.                                       *
+  *******************************************************"
+  
+<ROUTINE PERFORM (ACT "OPT" DOBJ IOBJ "AUX" PRTN RTN OA OD ODD OI WON CNT ORM)
+    <TRACE 1 "[PERFORM: ACT=" N .ACT>
+    <TRACE-DO 1
+        <COND (.DOBJ <TELL " DOBJ=" D .DOBJ "(" N .DOBJ ")">)>
+        <COND (.IOBJ <TELL " IOBJ=" D .IOBJ "(" N .IOBJ ")">)>
+        <TELL "]" CR>>
+    <SET PRTN <GET ,PREACTIONS .ACT>>
+    <SET RTN <GET ,ACTIONS .ACT>>
+    <SET OA ,PRSA>
+    <SET OD ,PRSO>
+    <SET ODD ,PRSO-DIR>
+    <SET OI ,PRSI>
+    <SET ORM ,REPORT-MODE>
+    <SETG PRSA .ACT>
+    <SETG PRSO .DOBJ>
+    <OR <==? .ACT ,V?WALK> <SETG PRSO-DIR <>>>
+    <SETG PRSI .IOBJ>
+    <TRACE-IN>
+    ;"Warn about improper number use, and handle multiple objects"
+    <COND (<G? <COUNT-PRS-APPEARANCES ,NUMBER> 1>
+           <TELL "You can't use more than one number in a command." CR>
+           <SET WON <>>)
+          (<AND <NOT ,PRSO-DIR> <PRSO? ,MANY-OBJECTS>>
+           <COND (<PRSI? ,MANY-OBJECTS>
+                  <TELL "You can't use multiple direct and indirect objects together." CR>
+                  <SET WON <>>)
+                 (ELSE
+                  <SETG REPORT-MODE ,SHORT-REPORT>
+                  <SET CNT <GETB ,P-PRSOS 0>>
+                  <DO (I 1 .CNT)
+                      <SETG PRSO <GET/B ,P-PRSOS .I>>
+                      <COND (<STILL-IN-ALL-TAKE-CHECK? ,PRSO ,PRSI>
+                             <TELL D ,PRSO ": ">
+                             <SET WON <PERFORM-CALL-HANDLERS .PRTN .RTN>>)>>)>)
+          (<PRSI? ,MANY-OBJECTS>
+           <SETG REPORT-MODE ,SHORT-REPORT>
+           <SET CNT <GETB ,P-PRSIS 0>>
+           <DO (I 1 .CNT)
+               <SETG PRSI <GET/B ,P-PRSIS .I>>
+               <COND (<STILL-IN-ALL-TAKE-CHECK? ,PRSI ,PRSO>
+                      <TELL D ,PRSI ": ">
+                      <SET WON <PERFORM-CALL-HANDLERS .PRTN .RTN>>)>>)
+          (ELSE <SET WON <PERFORM-CALL-HANDLERS .PRTN .RTN>>)>
+    <TRACE-OUT>
+    <SETG PRSA .OA>
+    <SETG PRSO .OD>
+    <SETG PRSO-DIR .ODD>
+    <SETG PRSI .OI>
+    <SETG REPORT-MODE .ORM>
+    .WON>
+
+<ROUTINE STILL-IN-ALL-TAKE-CHECK? (OBJ IOBJ)
+    <COND (<OR <NOT <VERB? TAKE>> <NOT .IOBJ>> <RTRUE>)
+          (<NOT <FSET? .IOBJ ,SURFACEBIT>> <RFALSE>)
+          (<=? <LOC .OBJ> .IOBJ> <RTRUE>)
+          (ELSE <RFALSE>)>>
+
+<SYNTAX TAKE OBJECT (FIND TAKEBIT) (MANY ON-GROUND IN-ROOM) FROM OBJECT (FIND SURFACEBIT) (ON-GROUND IN-ROOM) = V-TAKE>
+<SYNTAX PICK UP OBJECT (FIND TAKEBIT) (MANY ON-GROUND IN-ROOM) FROM OBJECT (FIND SURFACEBIT) (ON-GROUND IN-ROOM) = V-TAKE>
+<SYNTAX GET OBJECT (FIND TAKEBIT) (MANY ON-GROUND IN-ROOM) FROM OBJECT (FIND SURFACEBIT) (ON-GROUND IN-ROOM) = V-TAKE>
+<SYNTAX TAKE OBJECT (FIND TAKEBIT) (MANY ON-GROUND IN-ROOM) ON OBJECT (FIND SURFACEBIT) (ON-GROUND IN-ROOM) = V-TAKE>
+<SYNTAX PICK UP OBJECT (FIND TAKEBIT) (MANY ON-GROUND IN-ROOM) ON OBJECT (FIND SURFACEBIT) (ON-GROUND IN-ROOM) = V-TAKE>
+<SYNTAX GET OBJECT (FIND TAKEBIT) (MANY ON-GROUND IN-ROOM) ON OBJECT (FIND SURFACEBIT) (ON-GROUND IN-ROOM) = V-TAKE>
+
+;"*******************************************************
   * ZILF standard library includes already taken object *
   * in 'take all' and not held objects in 'drop all'.   *
   * This adds checks so only held objects are dropped   *
@@ -1993,7 +2064,7 @@ and,\" you say, \"if you see any other doll parts, make sure you let me know.\""
              <AND <VERB? TAKE DROP>
                   <NOT <OR <FSET? .OBJ ,TAKEBIT>
                            <FSET? .OBJ ,TRYTAKEBIT>>>>>>>
-
+ 
 ;"*******************************************************
   * Normally objects on surfaces are listed in room     *
   * description. To mimic Inform 7 this is turned of    *
