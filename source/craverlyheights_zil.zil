@@ -1,9 +1,3 @@
-"To Do ?"
-;" * SHOW PAULINE doesn't ask 'What do you want to show...' instead 'You're not holding Pauline'.
-     Could MATCH-SYNTAX be made to give higher score to first SYNTAX-line?
-   * TAKE ALL FROM SHELF
-"
-
 "Craverly Heights by Ryan Veeder - A ZIL exercise by Henrik Åsman"
 
 <CONSTANT GAME-TITLE "Craverly Heights">
@@ -388,14 +382,19 @@ Craverly Heights's problems upon your shoulders." CR>)>)
 ;"-----------------------------------------------------------------------------"
 
 ;"*******************************************************
-  * ZIL doesn't have backdrop objects. Instead there's  *
-  * a camera psuedo-object (THINGS) defined on every    *
-  * onstage-room that calls this routine when           *
-  * interacted with.                                    *
+  * The camera is defined as an object in the local-    *
+  * globals. You can then specify it in the GLOBAL      *
+  * property on every room where you want it to appear. *
   *******************************************************"
-  
+
+<OBJECT CAMERA
+	(SYNONYM CAMERA CAMERAS)
+	(IN LOCAL-GLOBALS)
+	(DESC "camera")
+	(ACTION CAMERA-F)
+	(FLAGS NDESCBIT)>
+	
 <ROUTINE CAMERA-F ()
-    <SETG PSEUDO-OBJECT-NAME "camera">
     <COND (<VERB? EXAMINE> <TELL "You just accidentally glanced at a camera, but they can edit that out." CR>)
           (ELSE <TELL "You're not supposed to acknowledge it." CR>)>>
 
@@ -410,8 +409,8 @@ Craverly Heights's problems upon your shoulders." CR>)>)
     (SOUTH TO E-HALLWAY)
     (ACTION PIZZA-F)
     (FLAGS LIGHTBIT)
-    (THINGS (<>) (CAMERA CAMERAS) CAMERA-F
-            (ITALIAN) (FLAG TRICOLOR TRICOLORE) FLAG-F)>
+    (THINGS (ITALIAN) (FLAG TRICOLOR TRICOLORE) FLAG-F)
+	(GLOBAL CAMERA)>
 
 ;"*******************************************************
   * THINGS are a type of lightweight objects that are   *
@@ -445,6 +444,13 @@ that is every one of Gina's pizzas.")
   * To mimic Inform 7 the description of the surface is *
   * handled here instead of automatically. The object   *
   * only listed when it contains other objects.         *
+  * About the RTRUE - Every action-routine must return  *
+  * true = the action has been handled, or false = the  *
+  * action has not been handled by this routine and the *
+  * parser then calls the next action-routine in the    *
+  * priority order. In this case the last condition     *
+  * can be false so here we need to explicitly return   *
+  * true to tell the parser that we are finished.       *
   *******************************************************"
 
 <ROUTINE TABLECLOTH-F ()
@@ -466,7 +472,7 @@ evening" EM-DASH "casts itself softly against the downy linen
 of spotless white tablecloths and the Italian flag hanging from
 the wall. The exit is south." CR>
            <COND (<NOT <CONTAINER-EMPTY? ,TABLECLOTH>> <CRLF> <DESCRIBE-CONTENTS ,TABLECLOTH>)>
-           <COND (<N==? <LOC ,GINA> ,HERE>
+           <COND (<NOT <LOC ,GINA>>
                   <COND (<NOT <FSET? ,HERE ,TOUCHBIT>>                                                     ;"Print this 1st time only"
                          <TELL CR "\"It looks like Gina's not here yet,\" you announce to the empty room. \"I wonder where she is.\"||The room is silent." CR>)
                         (ELSE
@@ -479,11 +485,11 @@ the wall. The exit is south." CR>
 ;"-----------------------------------------------------------------------------"
 
 ;"*******************************************************
-  * LOCAL-GLOBALS is "out of world".                    *
+  * GINA starts with no location defined. This means    *
+  * that a call to <LOC ,GINA> will return false.       *
   *******************************************************"
   
 <OBJECT GINA
-    (IN LOCAL-GLOBALS)
     (SYNONYM GINA WOMAN LANE LADY)
     (DESC "Gina")
     (DESCFCN GINA-DESC-F)
@@ -579,7 +585,7 @@ father! And so does...her father.\"" CR>)
            <CRLF>
            <COND (<SID?>
                   <COND (<==? ,SUSPECT ,GINA>
-                         <COND (<==? <LOC ,SATCHEL> ,LOCAL-GLOBALS>
+                         <COND (<NOT <LOC ,SATCHEL>>
                                 <TELL 
 "\"I want those jewels, Gina!\" you say, threatening the matronly entepreneur with the shining steel
 of your lethal accessory. \"Or do you want your blood all over these nice white tablecloths?\"||
@@ -621,7 +627,7 @@ say, quickly adding: \"And so am I!\"" CR>)
            <TELL "." CR>)
           (<AND <VERB? SHOW> <==? ,PRSI ,PHOTO>>
            <COND (<SID?>
-                  <COND (<N==? <LOC ,SATCHEL> ,LOCAL-GLOBALS> 
+                  <COND (<LOC ,SATCHEL> 
                          <TELL "\"That dog's death was as meaningless as your life,\" Gina eloquently states." CR>)
                         (<N==? ,SUSPECT ,LEO>
                          <GINASPEECH>
@@ -643,7 +649,7 @@ something?\" she asks.||\"Of course not,\" you answer." CR>)>)
   *******************************************************"
 
           (<AND <VERB? TALKING-TO> <==? ,PRSI ,JEWELS> <SID?>>
-           <COND (<N==? <LOC ,SATCHEL> ,LOCAL-GLOBALS>
+           <COND (<LOC ,SATCHEL>
                   <TELL 
 "\"You got your jewels. Now, go,\" Gina pouts, her pride hurt by your actions as much as her heart
 is hurt by her daughter's illness." CR>)
@@ -700,8 +706,8 @@ Everyone in town knows your name. It is Doctor Langridge." CR>)>)>>
     (EAST TO N-HALLWAY)
     (ACTION HOSPITAL-F)
     (FLAGS LIGHTBIT)
-    (THINGS (<>) (CAMERA CAMERAS) CAMERA-F
-            (<>) (BED) BED-F)>
+    (THINGS (<>) (BED) BED-F)
+	(GLOBAL CAMERA)>
 
 <ROUTINE HOSPITAL-F (RARG)
     <COND (<AND <VERB? LISTEN> <==? .RARG ,M-BEG>>
@@ -893,10 +899,10 @@ The exit is north.")
     (NORTH TO W-HALLWAY)
     (ACTION MANOR-F)
     (FLAGS LIGHTBIT)
-    (THINGS (<>) (CAMERA CAMERAS) CAMERA-F
-            (GARGANTUAN) (PORTRAIT PAINTING PICTURE) PORTRAIT-F
+    (THINGS (GARGANTUAN) (PORTRAIT PAINTING PICTURE) PORTRAIT-F
             (MAGHOGANY MAGHOGANY-PANELLED WOOD) (WALL PANEL) WALL-F
-            (SNAKE HEAD SNAKE-HEADED) (CANE) CANE-F)>
+            (SNAKE HEAD SNAKE-HEADED) (CANE) CANE-F)
+	(GLOBAL CAMERA)>
 
 <ROUTINE MANOR-F (RARG)
     <COND (<AND <VERB? LISTEN> <==? .RARG ,M-BEG>>
@@ -990,7 +996,7 @@ who melts in half when a criminal comes on to him.\"" CR>)
            <V-POINT>
            <CRLF>
            <COND (<AND <SID?> <==? ,SUSPECT ,LEO>> 
-                  <COND (<==? <LOC ,SATCHEL> ,LOCAL-GLOBALS> 
+                  <COND (<NOT <LOC ,SATCHEL>> 
                    <TELL 
 "\"I want those jewels, old man!\" you say, menacing the silver-haired millionaire with the gleaming barrel
 of your murderous weapon. \"Are you going to play along, or are you going to die?\"||\"All right, all right!
@@ -1013,7 +1019,7 @@ me be!\"||You feel the heft of the satchel in your hand and smile a smug smile."
             <TELL 
 ", calm yourself!\" the old man cries, but it is too late for him. You fire the gun into his heart,
 the heart that could never bring itself to feel love. It will never feel anything again">
-            <COND (<AND <==? ,SUSPECT ,LEO> <SID?> <==? <LOC ,SATCHEL> ,LOCAL-GLOBALS>>
+            <COND (<AND <==? ,SUSPECT ,LEO> <SID?> <NOT <LOC ,SATCHEL>>>
                    <TELL ", and you will never find the jewels">)>
             <TELL "||Craverly falls to the floor, dead." CR>
             <COND (<AND <DEAD? ,PAULINE> <DEAD? ,GINA>> <BLOODBATH-ENDING>)>)
@@ -1033,7 +1039,7 @@ the heart that could never bring itself to feel love. It will never feel anythin
            <TELL ".\"" CR>)
           (<AND <VERB? SHOW> <==? ,PRSI ,PHOTO>>
            <COND (<SID?> 
-                  <COND (<N==? <LOC ,SATCHEL> ,LOCAL-GLOBALS>
+                  <COND (<LOC ,SATCHEL>
                          <TELL "Leopold sneers. \"You wouldn't stay in prison, but at least that dog will stay in the ground.\"" CR>)
                         (<N==? ,SUSPECT ,GINA> 
                          <TELL <PICK-IN-ORDER ,SHOW-LEO-PHOTO-AS-SID> CR>
@@ -1055,7 +1061,7 @@ mysterious circumstances.\"||Craverly stares meaningfully back at you." CR>)>)
   * already given you the satchel.                      *
   *******************************************************"
 
-          (<AND <VERB? TALKING-TO> <==? ,PRSI ,JEWELS> <SID?> <N==? ,SUSPECT ,GINA> <==? <LOC ,SATCHEL> ,LOCAL-GLOBALS>> 
+          (<AND <VERB? TALKING-TO> <==? ,PRSI ,JEWELS> <SID?> <N==? ,SUSPECT ,GINA> <NOT <LOC ,SATCHEL>>> 
            <TELL <PICK-IN-ORDER ,ASK-LEO-ABOUT-JEWELS> CR>
            <SETG SUSPECT ,LEO>)>>
 
@@ -1338,10 +1344,10 @@ and death in your hands." CR>)>)
 
 <ROUTINE V-SHOOT ()
     <COND (<FSET? ,PRSO ,KLUDGEBIT>
-           <COND (<==? <LOC ,HANDGUN> ,WINNER>
+           <COND (<HELD? ,HANDGUN>
                   <PERFORM V?SHOOT ,HANDGUN>)
                  (ELSE <TELL "You don't have anything with which to shoot." CR>)>)
-          (<N==? <LOC ,HANDGUN> ,WINNER> <TELL "You don't have anything with which to shoot." CR>)
+          (<NOT <HELD? ,HANDGUN>> <TELL "You don't have anything with which to shoot." CR>)
           (<==? ,PRSO ,HANDGUN> 
            <COND (<AND ,CURRENT-TARGET <N==? ,CURRENT-TARGET ,HANDGUN>> <PERFORM V?SHOOT ,CURRENT-TARGET>)
                  (<BACKSTAGE?> <TELL "You pull the trigger. Nothing. It doesn't even click." CR>)
@@ -1741,7 +1747,7 @@ delivered to her." CR>)>>
 "'Hey, Lane,' you say. 'Shouldn't you be down at the Pizzeria?'||
 Lane's eyes widen. 'Oh, shoot, sorry! Sorry!'||She continues to
 apologize as she rushes out into the hall." CR>
-           <MOVE ,LANE ,LOCAL-GLOBALS>
+           <REMOVE ,LANE>
            <MOVE ,GINA ,PIZZA>
            <MOVE ,BLOUSE ,PIZZA>)
           (<VERB? KISS>
@@ -1763,7 +1769,6 @@ apologize as she rushes out into the hall." CR>
 ;"-----------------------------------------------------------------------------"
 
 <OBJECT SATCHEL
-    (IN LOCAL-GLOBALS)
     (SYNONYM SATCHEL POUCH SACK BAG)
     (DESC "satchel")
     (ACTION SATCHEL-F)
@@ -2560,4 +2565,3 @@ and,\" you say, \"if you see any other doll parts, make sure you let me know.\""
 <ROUTINE NUMBER-F () <TELL "You can't see any such thing." CR>>
 
 <SET REDEFINE <>>
-
