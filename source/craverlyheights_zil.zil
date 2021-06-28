@@ -388,12 +388,12 @@ Craverly Heights's problems upon your shoulders." CR>)>)
   *******************************************************"
 
 <OBJECT CAMERA
-	(SYNONYM CAMERA CAMERAS)
-	(IN LOCAL-GLOBALS)
-	(DESC "camera")
-	(ACTION CAMERA-F)
-	(FLAGS NDESCBIT)>
-	
+    (SYNONYM CAMERA CAMERAS)
+    (IN LOCAL-GLOBALS)
+    (DESC "camera")
+    (ACTION CAMERA-F)
+    (FLAGS NDESCBIT)>
+    
 <ROUTINE CAMERA-F ()
     <COND (<VERB? EXAMINE> <TELL "You just accidentally glanced at a camera, but they can edit that out." CR>)
           (ELSE <TELL "You're not supposed to acknowledge it." CR>)>>
@@ -410,7 +410,7 @@ Craverly Heights's problems upon your shoulders." CR>)>)
     (ACTION PIZZA-F)
     (FLAGS LIGHTBIT)
     (THINGS (ITALIAN) (FLAG TRICOLOR TRICOLORE) FLAG-F)
-	(GLOBAL CAMERA)>
+    (GLOBAL CAMERA)>
 
 ;"*******************************************************
   * THINGS are a type of lightweight objects that are   *
@@ -707,7 +707,7 @@ Everyone in town knows your name. It is Doctor Langridge." CR>)>)>>
     (ACTION HOSPITAL-F)
     (FLAGS LIGHTBIT)
     (THINGS (<>) (BED) BED-F)
-	(GLOBAL CAMERA)>
+    (GLOBAL CAMERA)>
 
 <ROUTINE HOSPITAL-F (RARG)
     <COND (<AND <VERB? LISTEN> <==? .RARG ,M-BEG>>
@@ -902,7 +902,7 @@ The exit is north.")
     (THINGS (GARGANTUAN) (PORTRAIT PAINTING PICTURE) PORTRAIT-F
             (MAGHOGANY MAGHOGANY-PANELLED WOOD) (WALL PANEL) WALL-F
             (SNAKE HEAD SNAKE-HEADED) (CANE) CANE-F)
-	(GLOBAL CAMERA)>
+    (GLOBAL CAMERA)>
 
 <ROUTINE MANOR-F (RARG)
     <COND (<AND <VERB? LISTEN> <==? .RARG ,M-BEG>>
@@ -1311,7 +1311,9 @@ and death in your hands." CR>)>)
                   <TELL "You raise the gun to your temple. ">
                   <COND (<==? <LOC ,PAULINE> ,HERE> <TELL "Pauline gasps." CR>)
                         (<==? <LOC ,GINA> ,HERE> <TELL "Gina gasps." CR>)
-                        (<==? <LOC ,LEO> ,HERE> <TELL "Leopold squints at you." CR>)>)>)
+                        (<==? <LOC ,LEO> ,HERE> <TELL "Leopold squints at you." CR>)>
+                  <SETG CURRENT-TARGET ,PRSI>
+				  <QUEUE I-CLEAR-TARGET 2>)>)
           (ELSE 
            <TELL "You point " T ,PRSO " " .XT "at " T ,PRSI CR>
            <SETG CURRENT-TARGET ,PRSI>
