@@ -354,7 +354,7 @@ Craverly Heights's problems upon your shoulders." CR>)>)
 <ROUTINE V-LISTEN () <TELL "It's pretty quiet." CR>>
 
 <ROUTINE V-GIVE ()
-    <PERFORM ,V?SHOW ,PRSO ,PRSI>
+    <PERFORM ,V?SSHOW ,PRSO ,PRSI>
     <RTRUE>>
 
 ;"*******************************************************
