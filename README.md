@@ -8,3 +8,5 @@ The original can be played online here - https://ifdb.org/viewgame?id=lwydetlk1o
 
 The Inform 7 and Dialog source code are here - https://linusakesson.net/dialog/craverly/craverly_side_by_side.html
 
+Johan Berntsson also made a port to Inform 6 with the PunyInform library - https://github.com/johanberntsson/Craverly-Heights_PunyInform
+
