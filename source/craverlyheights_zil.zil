@@ -10,11 +10,16 @@ Ported to ZIL by Henrik Åsman, with kind permission of the author.">
 ;"-----------------------------------------------------------------------------"
 
 ;"*******************************************************
-  * XZIP compiles to a Z5 game and the original has     *
-  * IFID = D3C6DFB8-3327-4181-886A-64ABA4512F8C         *
+  * XZIP (z5) compiles to a Z5 game. The code also can  *
+  * compile to ZIP (z3), EZIP (z4) or 8 (z8) but XZIP   *
+  * recommended.                                        *
+  *                                                     *
+  * The original has                                    *
+  *     IFID = D3C6DFB8-3327-4181-886A-64ABA4512F8C     *
   *******************************************************"
   
 <VERSION XZIP>
+<VERSION? (ZIP <VERSION ZIP TIME>)>		;"Change to time presentation if z3"
 <CONSTANT RELEASEID 2>
 <CONSTANT IFID-ARRAY <PTABLE (STRING) "UUID://C2586C17-0345-47D0-BD9E-9B738628F425//">>
 
@@ -37,7 +42,11 @@ Ported to ZIL by Henrik Åsman, with kind permission of the author.">
   * parsers main loop in the standard library.          *
   *******************************************************"
 
-<ROUTINE GO () 
+<ROUTINE GO ()
+	;"Init clock to 12:00 if it is compiled to z3 <VERSION ZIP TIME>"
+	<VERSION? (ZIP
+		<SETG SCORE 12>
+		<SETG MOVES 0>)>
     <CRLF>
     <INIT-STATUS-LINE>
     <V-VERSION>
@@ -113,6 +122,19 @@ Ported to ZIL by Henrik Åsman, with kind permission of the author.">
 <ROUTINE ALIVE? (O) <RETURN <NOT <DEAD? .O>>>>              ;"Is actor alive?"
 
 ;"*******************************************************
+  * INPUT doesn't work for z3-files. With VERSION? it   *
+  * is possible to compile different snippets depending *
+  * on which version we target.                         *
+  *******************************************************"
+  
+<VERSION?
+	(ZIP
+		<ROUTINE WAIT-FOR-KEY ("AUX" (BUF1 <ITABLE NONE 10 (BYTE)>)
+									 (BUF2 <ITABLE NONE 10 (BYTE)>))
+			<READ .BUF1 .BUF2>>)
+	(ELSE <ROUTINE WAIT-FOR-KEY () <INPUT 1>>)>
+
+;"*******************************************************
   * Support for fixed font.                             *
   *******************************************************"
   
@@ -122,14 +144,19 @@ Ported to ZIL by Henrik Åsman, with kind permission of the author.">
 ;"*******************************************************
   * Add a TELL-TOKEN that checks if the unicode-char    *
   * em-dash can be printed by the interpreter. If not,  *
-  * print '-' instead.                                  *
+  * print '-' instead. ZIP & EZIP doesn't support       *
+  * UNICODE characters.                                 *
   *******************************************************"
 
 <ADD-TELL-TOKENS
     EM-DASH               <PRINT-EM-DASH>>
 
-<ROUTINE PRINT-EM-DASH ()
-    <COND (<==? <CHECKU 8212> 0 2> <PRINT "-">)(ELSE <PRINTU 8212>)>>
+<VERSION?
+	(ZIP <ROUTINE  PRINT-EM-DASH () <PRINT "-">>)
+	(EZIP <ROUTINE  PRINT-EM-DASH () <PRINT "-">>)
+	(ELSE
+		<ROUTINE PRINT-EM-DASH ()
+			<COND (<==? <CHECKU 8212> 0 2> <PRINT "-">)(ELSE <PRINTU 8212>)>>)>
 
 ;"*******************************************************
   * This adds a new property to OBJECTs, SDESCFCN and a *
@@ -298,7 +325,7 @@ Craverly Heights's problems upon your shoulders." CR>)>)
     (FLAGS NDESCBIT NARTICLEBIT GREETBIT)>
 
 ;"*******************************************************
-  * Create a generic object with synonyms so the parser *
+  * Create generic objects with synonyms so the parser  *
   * recognises there words and so that the player can   *
   * ask [actor] about [something], where [something]    *
   * can be an object that's not in the room or a more   *
@@ -310,9 +337,24 @@ Craverly Heights's problems upon your shoulders." CR>)>)
   * are not defined and added to the lexicon.           *
   *******************************************************"
 
-<OBJECT GENERIC
+<OBJECT GENERIC-PAULINE
     (IN GENERIC-OBJECTS)
-    (SYNONYM PAULINE JANINE WENDELL LEO LEOPOLD GINA LANE)
+    (SYNONYM PAULINE JANINE)
+    (DESC "generic")>
+
+<OBJECT GENERIC-WENDELL
+    (IN GENERIC-OBJECTS)
+    (SYNONYM WENDELL)
+    (DESC "generic")>
+
+<OBJECT GENERIC-LEO
+    (IN GENERIC-OBJECTS)
+    (SYNONYM LEO LEOPOLD)
+    (DESC "generic")>
+
+<OBJECT GENERIC-GINA
+    (IN GENERIC-OBJECTS)
+    (SYNONYM GINA LANE)
     (DESC "generic")>
 
 ;"*******************************************************
@@ -1213,7 +1255,13 @@ humanity in such enormous ways." CR>)>)
 
 <OBJECT PHOTO
     (IN SHELVES)
-    (SYNONYM PHOTO DOG PICTURE PHOTOGRAPH WENDELL)
+	
+;"*******************************************************
+  * Z3 only allows up to four synonyms                  *
+  *******************************************************"
+  
+    <VERSION? (ZIP (SYNONYM PHOTO DOG PICTURE WENDELL))
+		      (ELSE (SYNONYM PHOTO DOG PICTURE PHOTOGRAPH WENDELL))>
     (ADJECTIVE FRAMED)
     (DESC "framed photo")
     (ACTION PHOTO-F)
@@ -1251,7 +1299,8 @@ Wendell was cut down before his time" EM-DASH "under mysterious circumstances." 
 
 <OBJECT SUNGLASSES
     (IN SHELVES)
-    (SYNONYM SUNGLASSES GLASSES SHADES GLASS SHADE)
+	<VERSION? (ZIP (SYNONYM SUNGLASSES GLASSES SHADES))
+			  (ELSE (SYNONYM SUNGLASSES GLASSES SHADES GLASS SHADE))>
     (ADJECTIVE PAIR OF)
     (PRONOUN THEM)
     (DESC "pair of sunglasses")
@@ -1276,7 +1325,8 @@ Wendell was cut down before his time" EM-DASH "under mysterious circumstances." 
 
 <OBJECT HANDGUN
     (IN SHELVES)
-    (SYNONYM HANDGUN GUN PISTOL FIREARM TRIGGER)
+	<VERSION? (ZIP (SYNONYM HANDGUN GUN PISTOL TRIGGER))
+			  (ELSE (SYNONYM HANDGUN GUN PISTOL FIREARM TRIGGER))>
     (DESC "handgun")
     (ACTION HANDGUN-F)
     (FLAGS TAKEBIT WEAPONBIT)>
@@ -1380,7 +1430,7 @@ for a while longer. I've got things to do.\"||You sneer menacingly." CR>)
 "\"I've had it,\" you announce. \"I can't go on. All the secrets. All the lies. I'm finished. This
 is the end for your beloved Doctor Langridge. And little do you know: the secret of Wendell's death
 dies with me!\"||BLAM||PRESS ANY KEY TO CONTINUE||">
-                  <INPUT 1>
+                  <WAIT-FOR-KEY>
                   <SETG GAME-OVER-TEXT "We're bringing back your evil twin.">
                   <PRINT-3-FANCY-ASTERISKS>
                   <JIGS-UP 
@@ -1394,13 +1444,17 @@ what are you going to do? Doctor Langridge is dead.\"||\"Oh, that's not a proble
   * before printing them.                               *
   *******************************************************"
 
-<ROUTINE PRINT-3-FANCY-ASTERISKS ()
-    <COND (<==? <CHECKU 10020> 0 2> <PRINT "-+-+-+-">)
-          (ELSE <PRINTU 10020> <PRINTU 10020> <PRINTU 10020>)>>
+<VERSION?
+	(ZIP <ROUTINE PRINT-3-FANCY-ASTERISKS () <PRINT "-+-+-+-">>)
+	(EZIP <ROUTINE PRINT-3-FANCY-ASTERISKS () <PRINT "-+-+-+-">>)
+	(ELSE
+		<ROUTINE PRINT-3-FANCY-ASTERISKS ()
+			<COND (<==? <CHECKU 10020> 0 2> <PRINT "-+-+-+-">)
+				  (ELSE <PRINTU 10020> <PRINTU 10020> <PRINTU 10020>)>>)>
           
 <ROUTINE BLOODBATH-ENDING ()
     <TELL "|PRESS ANY KEY TO CONTINUE||">
-    <INPUT 1>
+    <WAIT-FOR-KEY>
     <SETG GAME-OVER-TEXT "Tune in next week!">
     <PRINT-3-FANCY-ASTERISKS>
     <TELL 
@@ -1569,7 +1623,8 @@ some point.||Thanks for playing.">
   
 <OBJECT SCRIPT
     (IN TABLE)
-    (SYNONYM SCRIPT PAPER PAPERS RESULT RESULTS)
+	<VERSION? (ZIP (SYNONYM SCRIPT PAPER PAPERS RESULTS))
+			  (ELSE (SYNONYM SCRIPT PAPER PAPERS RESULT RESULTS))>
     (ADJECTIVE SHEETS OF TEST COUPLE SET)
     (SDESCFCN SCRIPT-SDESC-F)
     (ACTION SCRIPT-F)
@@ -1685,7 +1740,7 @@ with the identity of your father.\"||Pauline looks up from the paper, her eyes w
 father?\"||\"I just wanted to make sure that's what you wanted,\" you reply.||\"It is,\" says Pauline.">>
 
 <ROUTINE DEAD-CRAVERLY-ENDING ()
-    <INPUT 1>
+    <WAIT-FOR-KEY>
     <SETG GAME-OVER-TEXT "Tune in next week.">
     <PRINT-3-FANCY-ASTERISKS>
     <JIGS-UP 
@@ -1695,7 +1750,7 @@ the first rule of improv is, you're supposed to say 'Yes, and'.\"||\"Oh, I see. 
 Yes, and, you're fired.\"">>
 
 <ROUTINE FINISH-THE-EPISODE ()
-    <INPUT 1>
+    <WAIT-FOR-KEY>
     <SETG GAME-OVER-TEXT "We gotta hire a flippin' writer.">
     <PRINT-3-FANCY-ASTERISKS>
     <TELL "||\"And fade to black. See? Everything worked out fine.\"||">
@@ -1805,7 +1860,7 @@ that you've produced.||\"These are the jewels,\" you explain, \"the jewels that 
 for. I stole them on your orders! But you betrayed me. But now they're mine!\"||\"And what are you going to
 do with them?\" asks Leopold, the shadows of confusion darting across his weathered brow.||\"I'm going to
 buy Craverly Manor, and you're going to be my butler.\"||PRESS ANY KEY TO CONTINUE||">
-                         <INPUT 1>
+                         <WAIT-FOR-KEY>
                          <SETG GAME-OVER-TEXT "...I'm gonna be busy looking for a writer.">
                          <PRINT-3-FANCY-ASTERISKS>
                          <JIGS-UP
@@ -1828,7 +1883,7 @@ illness. \"Then you were able to convince...\"||\"">
 treatment that will save my life!\" Pauline's eyes are huge and wet beneath the hospital lights as they
 plaintively gaze upward into your own.||\"Sugarbabe, those were my thoughts exactly.\"||PRESS ANY KEY
 TO CONTINUE||">
-                         <INPUT 1>
+                         <WAIT-FOR-KEY>
                          <SETG GAME-OVER-TEXT "Right after we hire a writer.">
                          <PRINT-3-FANCY-ASTERISKS>
                          <JIGS-UP
@@ -1852,7 +1907,7 @@ scum?\"||\"It's a pile of jewels. They're worth a lot of money. And I'm giving t
 jaw drops, but you continue. \"Then you're going to sell them, and then you're going to use the money
 to open a new Gina's Pizzeria location. And you're going to make me part owner. And we're going to
 be rich.\"||Gina can't think of anything to say.||PRESS ANY KEY TO CONTINUE||">
-                         <INPUT 1>
+                         <WAIT-FOR-KEY>
                          <SETG GAME-OVER-TEXT "We're definitely hiring a writer, though.">
                          <PRINT-3-FANCY-ASTERISKS>
                          <JIGS-UP
@@ -2133,29 +2188,34 @@ and,\" you say, \"if you see any other doll parts, make sure you let me know.\""
 
 ;"*******************************************************
   * Default statusline shows score and moves. This      *
-  * removes that.                                       *
+  * removes that. Z3 have a fixed statusline built into *
+  * the interpreter.                                    *
   *******************************************************"
 
-<ROUTINE UPDATE-STATUS-LINE ()
-    <SCREEN 1>
-    <HLIGHT ,H-INVERSE>
-    <FAKE-ERASE>
-    <TELL !\ >
-    <COND (,HERE-LIT <TELL D ,HERE>)
-          (ELSE <TELL %,DARKNESS-STATUS-TEXT>)>
-    <SCREEN 0>
-    <HLIGHT ,H-NORMAL>>
+<VERSION?
+	(ZIP)
+	(ELSE
+		<ROUTINE UPDATE-STATUS-LINE ()
+			<SCREEN 1>
+			<HLIGHT ,H-INVERSE>
+			<FAKE-ERASE>
+			<TELL !\ >
+			<COND (,HERE-LIT <TELL D ,HERE>)
+				(ELSE <TELL %,DARKNESS-STATUS-TEXT>)>
+			<SCREEN 0>
+			<HLIGHT ,H-NORMAL>>)>
 
 ;"*******************************************************
-  * This is to change the end-of-game messages.         *
+  * This is to change the end-of-game messages. Z3      *
+  * doesn't support bold/normal.                        *
   *******************************************************"
 
 <GLOBAL GAME-OVER-TEXT "The game is over">
 
 <ROUTINE PRINT-GAME-OVER ()
-    <HLIGHT H-BOLD>
+    <VERSION? (ZIP) (ELSE <HLIGHT H-BOLD>)>
     <TELL CR CR "    *** " ,GAME-OVER-TEXT " ***" CR CR CR>
-    <HLIGHT H-NORMAL>>
+    <VERSION? (ZIP) (ELSE <HLIGHT H-NORMAL>)>>
 
 <ROUTINE JIGS-UP (TEXT "AUX" W)
     <SETG P-CONT 0>
