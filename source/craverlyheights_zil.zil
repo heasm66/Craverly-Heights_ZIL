@@ -14,11 +14,16 @@ Ported to ZIL by Henrik Åsman, with kind permission of the author.">
   * compile to ZIP (z3), EZIP (z4) or 8 (z8) but XZIP   *
   * recommended.                                        *
   *                                                     *
+  * <VERSION ...> is in an external file to enable the  *
+  * bat-script to generate all z-machine versions.      *
+  * Otherwise you would have <VERSION XZIP> here.       *
+  *                                                     *
   * The original has                                    *
   *     IFID = D3C6DFB8-3327-4181-886A-64ABA4512F8C     *
   *******************************************************"
   
-<VERSION XZIP>
+<INSERT-FILE "version">
+
 <VERSION? (ZIP <VERSION ZIP TIME>)>		;"Change to time presentation if z3"
 <CONSTANT RELEASEID 2>
 <CONSTANT IFID-ARRAY <PTABLE (STRING) "UUID://C2586C17-0345-47D0-BD9E-9B738628F425//">>
